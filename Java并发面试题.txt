@@ -1,0 +1,92 @@
+volatile
+    JVM提供的轻量级同步机制  
+    三大特性
+        保证可见性
+        不保证原子性
+        禁止指令重排
+    内存屏障（Memory Barrier）
+        又称内存栅栏，是一个CPU指令，有两个作用
+            保证特定操作的顺序执行
+                内存屏障会禁止其前后的指令执行重排序优化
+            保证某些变量的内存可见性（volatile利用这个实现了内存可见性）
+                强制刷出各种CPU的缓存数据,使得任何线程都能读取到最新的版本
+                volatile变量进行写操作时,会在写入时加入一条store屏障指令,将工作内存中的共享变量值刷新到主内存
+                执行读操作时,回在读操作前加入一条load屏障指令,从内存中读取共享变量
+    使用场景
+        单例模式,双重检验写法,可能因为指令重排导致返回的对象不正确
+            正常顺序:先分配内存,再初始化,再指向内存区域
+            重拍顺序:先分配内存,再指向内存区域,最后初始化(单线程对正确性没有影响)
+            高并发导致的问题:可能会指向内存区域以后导致了通过非空检测,但是此时还没有完成初始化,导致返回的结果有问题
+
+JMM（java 内存模型）
+    是一种模型，是大多数程序开发需要遵守的一种规范
+    JMM三大特性
+        可见性：一个线程修改变量以后，该更改可以立刻被其他线程读取（感知  ）
+        原子性：不可分割，完整性。也即某个线程在做具体业务的时候，中间不可以被加塞或者被分割，同时成功或者同时失败
+        有序性
+    主内存共享
+    工作内存=栈区（为线程所私有）
+    变量存储在主内存中，线程使用主内存中的变量需要先拷贝一份到自己的工作内存中
+    如果一个线程修改了一个变量（先在自己的工作内存中修改，然后写回主内存），但是有可能其他的线程所持有的是更新之前的变量值（这就是内存的不可见）
+
+CAS
+     compare and set，比较并交换
+     AtomicInteger原子性的来源
+     底层实现
+        自旋锁
+        Unsafe类
+            CAS全称是Compare-And-Swap，是一条CPU并发原语
+            作用是判断某个位置的值是否是预期值，如果是就改为新的值
+            这个过程是原子的
+            是CAS的核心类，通过本地（Native）方法来访问，相当于一个后门，基于该类可以直接操作特定内存的数据
+    CAS的缺点
+        循环时间长，开销大
+        只能保证一个共享变量的原子操作
+        ABA问题
+            中间可能被不可见的修改
+            使用版本号或者时间戳解决
+    原子引用
+        AtomicReference<T> 把自己定义的类进行原子包装(此时仍然有ABA问题)             
+        AtomicStampedReference<T>　带时间戳的原子引用，解决了ABA的问题
+
+集合类不安全问题
+    表现:报错
+        ConcurrentModificationException
+    导致原因
+        并发争抢
+    解决方案:
+        Vector
+        Collections.synchronizedList(ArrayList) (加锁)
+        ConcurrentHashMap
+        CopyOnWriteArrayList (写时复制)
+            安全
+            最终一致性
+            浪费内存
+
+阻塞队列(Blocking Queue)
+     
+线程池核心参数
+    corePoolSize：线程池中常驻核心线程个数，当线程池中的线程数超过corePoolSize的时候将多余的放入缓存队列
+    maximumPoolSize：线程池中能同时存在的最大线程数，这个值必须大于等于1
+    keepAliveTime：多余（超出corePoolSize的线程）线程的存活时间
+    TimeUnit：keepAliveTime时间的单位
+    BlockingQueue：任务队列，被提交但是尚未执行的任务
+    ThreadFactory：用于创建线程，一般使用默认值
+    RejectedExecutionHandler：拒绝策略（线程池中线程数量达到极限，同时阻塞队列也已满）
+
+线程池底层工作原理
+    先使用核心线程，核心线程满后使用阻塞队列，阻塞队列满后扩展线程数量（最大到maximumPoolSize），扩展后还不够，启用拒绝策略
+    jdk内置的四种拒绝策略
+        AbortPolicy：直接抛出RejectedExecutionException异常，组织系统运行
+        CallerRunsPolicy：“调用者运行”的一种调节机制，不抛弃任务也不会抛出异常，而是将某些任务回退到调用者
+        DiscardOldestPolicy：抛弃队列中等待最久的任务，然后把当前任务加入队列中，尝试再次提交
+        DiscardPolicy：直接抛弃任务，不做处理也不抛出异常。如果允许任务丢失这就是最好的一种方式
+    请求降低，线程不适用，多余线程空闲时间超出了keepAliveTime，则撤销多余线程，只保留core
+
+    用Executors创建线程池的隐患
+        默认使用的BlockingQueue是LinkedBlockingQueue，允许的最大容量是Integer.MAX_VALUE，近乎无界队列，可能会导致OOM
+        解决方案，手写ThreadPoolExecutor（），自定义7个参数（主要是corePoolSize，MaximumPoolSize和BlockingQueue的最大值，其他的可以使用默认的）
+
+    线程池的参数配置
+        CPU密集型：尽量减少线程的数量，CPU核数+1个线程的线程池
+        IO密集型：可能会存在大量阻塞，因此需要较多的线程数量。一般使用cpu核数/（1-阻塞系数），阻塞系数一般选0.8~0.9，根据实际的生产环境决定
