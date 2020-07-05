@@ -1,0 +1,56 @@
+
+
+
+【2】输入一个url（例如www.baidu.com）之后发生了什么
+
+
+
+模型
+    TCP/IP四层模型
+    OSI七层模型
+    应用层，传输层，网络层常见协议
+
+
+http和https 不同点
+    【2】http报文结构
+    头部有哪些字段
+    状态码
+    【2】https的过程
+        非对称加密，对称加密
+    【2】https和http的区别
+    【2】cookie和session的区别
+        cookie的参数有哪些
+        服务器的域名是google，我可以修改cookie的domain为baidu吗？
+        cookie被仿造怎么办
+    【2】get和post
+        区别
+        详解
+        什么协议规定的
+    http request和response
+    http 1.0和1.1和2.x的区别
+    https ssl
+    https证书签发过程
+tcp
+    【3】三次握手
+        是什么
+        为什么需要三次
+    【4】四次挥手
+        【3】time_wait 和 close_wait
+        大量连接处于time_wait的原因，造成什么问题
+    tcp是长连接还是短链接
+    【2】tcp的可靠性
+    拥塞控制
+    UDP有拥塞控制吗
+    滑动窗口
+    拥塞窗口
+    
+网络安全
+    DDOS攻击
+        工具手段
+        如何解决
+        关键点
+    MD5
+        可逆吗
+        会被破解吗？
+        如何破解
+    

@@ -1,0 +1,18 @@
+
+maven
+
+spring
+    AOP和IOC的底层实现
+    springMVC的原理和底层实现
+
+倒排索引
+
+Paxos和ZAB协议
+
+CAP理论，分区容错性的意义
+
+//HDFS的读取，写入，容错处理（源码）
+
+//MapReduce的过程
+
+集群脑裂
